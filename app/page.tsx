@@ -9,9 +9,7 @@ export default function Home() {
           {/* Logo */}
           <div className='flex flex-col items-center justify-center mb-8'>
             <img src='/swim.webp' alt='orca' className='w-[400px] h-[260px]' />
-            <h1 className='text-5xl md:text-7xl font-bold text-black ml-4'>
-              Orca
-            </h1>
+            <h1 className='text-5xl md:text-7xl font-bold text-black'>Orca</h1>
           </div>
 
           {/* Tagline */}

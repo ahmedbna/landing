@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/provider/theme-provider';
+import { ConvexAuthNextjsServerProvider } from '@convex-dev/auth/nextjs/server';
+import ConvexClientProvider from '@/provider/ConvexClientProvider';
+import { Toaster } from '@/components/ui/sonner';
 
 // @ts-ignore
 import './globals.css';
@@ -70,22 +73,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang='en' suppressHydrationWarning>
-      <head />
+    <ConvexAuthNextjsServerProvider>
+      <html lang='en' suppressHydrationWarning>
+        <head />
 
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ThemeProvider
-          enableSystem
-          attribute='class'
-          defaultTheme='dark'
-          storageKey='bna-ai-cad-theme'
-          disableTransitionOnChange
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
-          {children}
-        </ThemeProvider>
-      </body>
-    </html>
+          <ThemeProvider
+            enableSystem
+            attribute='class'
+            defaultTheme='dark'
+            storageKey='bna-ai-cad-theme'
+            disableTransitionOnChange
+          >
+            <ConvexClientProvider>{children}</ConvexClientProvider>
+            <Toaster />
+          </ThemeProvider>
+        </body>
+      </html>
+    </ConvexAuthNextjsServerProvider>
   );
 }

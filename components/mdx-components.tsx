@@ -23,10 +23,7 @@ export const mdxComponents = {
   ),
   p: ({ className, ...props }: any) => (
     <p
-      className={cn(
-        'leading-7 tracking-tight text-[#00000090] mb-1',
-        className
-      )}
+      className={cn('tracking-tight text-[#00000095] font-medium', className)}
       {...props}
     />
   ),
