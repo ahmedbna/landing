@@ -1,13 +1,17 @@
-'use client';
-
-import PrivacyMDX from '@/content/privacy.mdx';
-import { MDXProvider } from '@mdx-js/react';
+import { MDXRemote } from 'next-mdx-remote/rsc';
+import fs from 'fs';
+import path from 'path';
 import { mdxComponents } from '@/components/mdx-components';
 
-export default function PrivacyPage() {
-  return (
-    <MDXProvider components={mdxComponents}>
-      <PrivacyMDX />
-    </MDXProvider>
+export const metadata = {
+  title: 'Privacy Policy',
+};
+
+export default async function PrivacyPage() {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), 'content/privacy.mdx'),
+    'utf8'
   );
+
+  return <MDXRemote source={source} components={mdxComponents} />;
 }

@@ -1,13 +1,17 @@
-'use client';
-
-import TermsMDX from '@/content/terms.mdx';
-import { MDXProvider } from '@mdx-js/react';
+import { MDXRemote } from 'next-mdx-remote/rsc';
+import fs from 'fs';
+import path from 'path';
 import { mdxComponents } from '@/components/mdx-components';
 
-export default function TermsPage() {
-  return (
-    <MDXProvider components={mdxComponents}>
-      <TermsMDX />
-    </MDXProvider>
+export const metadata = {
+  title: 'Terms of Service',
+};
+
+export default async function TermsPage() {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), 'content/terms.mdx'),
+    'utf8'
   );
+
+  return <MDXRemote source={source} components={mdxComponents} />;
 }
