@@ -26,6 +26,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
       },
     }),
     Password({
+      verify: ResendOTP,
       profile(params, tokens) {
         return {
           name: params.name as string,
@@ -47,13 +48,13 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
 
         if (!/[a-z]/.test(password)) {
           throw new Error(
-            'Password must contain at least one lowercase letter'
+            'Password must contain at least one lowercase letter',
           );
         }
 
         if (!/[A-Z]/.test(password)) {
           throw new Error(
-            'Password must contain at least one uppercase letter'
+            'Password must contain at least one uppercase letter',
           );
         }
 

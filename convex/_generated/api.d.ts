@@ -8,20 +8,28 @@
  * @module
  */
 
-import type * as api_webhook from "../api/webhook.js";
+import type * as api_livekit from "../api/livekit.js";
+import type * as api_livekitNode from "../api/livekitNode.js";
+import type * as api_revenuecat from "../api/revenuecat.js";
+import type * as api_room from "../api/room.js";
+import type * as api_roomNode from "../api/roomNode.js";
 import type * as auth from "../auth.js";
+import type * as completions from "../completions.js";
 import type * as conversations from "../conversations.js";
 import type * as courses from "../courses.js";
 import type * as credits from "../credits.js";
+import type * as home from "../home.js";
 import type * as http from "../http.js";
 import type * as lessons from "../lessons.js";
 import type * as passwordReset from "../passwordReset.js";
+import type * as piperModels from "../piperModels.js";
+import type * as posts from "../posts.js";
 import type * as resendOTP from "../resendOTP.js";
 import type * as resendPasswordOTP from "../resendPasswordOTP.js";
-import type * as router from "../router.js";
-import type * as scores from "../scores.js";
+import type * as rooms from "../rooms.js";
+import type * as subscriptions from "../subscriptions.js";
+import type * as userDeletion from "../userDeletion.js";
 import type * as users from "../users.js";
-import type * as wins from "../wins.js";
 
 import type {
   ApiFromModules,
@@ -30,20 +38,28 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  "api/webhook": typeof api_webhook;
+  "api/livekit": typeof api_livekit;
+  "api/livekitNode": typeof api_livekitNode;
+  "api/revenuecat": typeof api_revenuecat;
+  "api/room": typeof api_room;
+  "api/roomNode": typeof api_roomNode;
   auth: typeof auth;
+  completions: typeof completions;
   conversations: typeof conversations;
   courses: typeof courses;
   credits: typeof credits;
+  home: typeof home;
   http: typeof http;
   lessons: typeof lessons;
   passwordReset: typeof passwordReset;
+  piperModels: typeof piperModels;
+  posts: typeof posts;
   resendOTP: typeof resendOTP;
   resendPasswordOTP: typeof resendPasswordOTP;
-  router: typeof router;
-  scores: typeof scores;
+  rooms: typeof rooms;
+  subscriptions: typeof subscriptions;
+  userDeletion: typeof userDeletion;
   users: typeof users;
-  wins: typeof wins;
 }>;
 
 /**

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/provider/theme-provider';
 import { ConvexAuthNextjsServerProvider } from '@convex-dev/auth/nextjs/server';
 import ConvexClientProvider from '@/provider/ConvexClientProvider';
@@ -8,14 +8,10 @@ import { Toaster } from '@/components/ui/sonner';
 // @ts-ignore
 import './globals.css';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const inter = Inter({
   subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -23,7 +19,7 @@ export const metadata: Metadata = {
     default: 'Orca',
     template: 'Orca | %s',
   },
-  description: 'Learn a new language while having fun',
+  description: 'The fun way to learn a new language',
   metadataBase: new URL('https://orca.ahmedbna.com'),
   openGraph: {
     title: 'Orca',
@@ -77,9 +73,7 @@ export default function RootLayout({
       <html lang='en' suppressHydrationWarning>
         <head />
 
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
+        <body className={`${inter.variable} antialiased`}>
           <ThemeProvider
             enableSystem
             attribute='class'

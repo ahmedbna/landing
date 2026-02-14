@@ -26,7 +26,7 @@ export const ResendOTPPasswordReset = Resend({
       'Sending password reset email to:',
       email,
       'with token:',
-      token
+      token,
     );
 
     if (!provider.apiKey) {
@@ -38,13 +38,13 @@ export const ResendOTPPasswordReset = Resend({
 
     try {
       const { data, error } = await resend.emails.send({
-        from: 'BNA UI <hi@ahmedbna.com>',
+        from: 'Orca <orca@orca.ahmedbna.com>',
         to: [email],
-        subject: `Reset your BNA UI password`,
+        subject: `Reset your Orca password`,
         text: `Your password reset code is: ${token}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>Reset your BNA UI password</h2>
+            <h2>Reset your Orca password</h2>
             <p>You requested to reset your password. Your verification code is:</p>
             <div style="font-size: 24px; font-weight: bold; background: #f5f5f5; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px;">
               ${token}
