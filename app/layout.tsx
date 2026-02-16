@@ -21,6 +21,10 @@ export const metadata: Metadata = {
   },
   description: 'The fun way to learn a new language',
   metadataBase: new URL('https://orca.ahmedbna.com'),
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#FAD40B' },
+    { media: '(prefers-color-scheme: dark)', color: '#FAD40B' },
+  ],
   openGraph: {
     title: 'Orca',
     description: 'Orca',
