@@ -3,6 +3,26 @@ import { v } from 'convex/values';
 import { mutation, query, internalMutation } from './_generated/server';
 import { getAuthUserId } from '@convex-dev/auth/server';
 
+/**
+ * Parse the ADMIN_EMAILS env var — a comma-separated list of email addresses
+ * that have access to the analytics dashboard.
+ *
+ * Set in your Convex dashboard environment variables:
+ *   ADMIN_EMAILS=alice@example.com,bob@example.com,charlie@example.com
+ */
+function getAdminEmails(): string[] {
+  const raw = process.env.ADMIN_EMAILS ?? '';
+  return raw
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function isAdmin(email: string | undefined | null): boolean {
+  if (!email) return false;
+  return getAdminEmails().includes(email.toLowerCase());
+}
+
 /* ================================================== */
 /* TRACK EVENT */
 /* ================================================== */
@@ -155,7 +175,7 @@ export const getOverviewStats = query({
     if (!userId) throw new Error('Not authenticated');
 
     const user = await ctx.db.get(userId);
-    if (user?.email !== process.env.ADMIN_EMAIL) {
+    if (!isAdmin(user?.email)) {
       throw new Error('Not authorized');
     }
 
@@ -274,7 +294,7 @@ export const getRecentSessions = query({
     if (!userId) throw new Error('Not authenticated');
 
     const user = await ctx.db.get(userId);
-    if (user?.email !== process.env.ADMIN_EMAIL) {
+    if (!isAdmin(user?.email)) {
       throw new Error('Not authorized');
     }
 
@@ -306,7 +326,7 @@ export const getRouteAnalytics = query({
     if (!userId) throw new Error('Not authenticated');
 
     const user = await ctx.db.get(userId);
-    if (user?.email !== process.env.ADMIN_EMAIL) {
+    if (!isAdmin(user?.email)) {
       throw new Error('Not authorized');
     }
 
@@ -371,7 +391,7 @@ export const getErrorLogs = query({
     if (!userId) throw new Error('Not authenticated');
 
     const user = await ctx.db.get(userId);
-    if (user?.email !== process.env.ADMIN_EMAIL) {
+    if (!isAdmin(user?.email)) {
       throw new Error('Not authorized');
     }
 
@@ -409,7 +429,7 @@ export const getUserJourneys = query({
     if (!authId) throw new Error('Not authenticated');
 
     const user = await ctx.db.get(authId);
-    if (user?.email !== process.env.ADMIN_EMAIL) {
+    if (!isAdmin(user?.email)) {
       throw new Error('Not authorized');
     }
 
@@ -450,7 +470,7 @@ export const getRetentionData = query({
     if (!userId) throw new Error('Not authenticated');
 
     const user = await ctx.db.get(userId);
-    if (user?.email !== process.env.ADMIN_EMAIL) {
+    if (!isAdmin(user?.email)) {
       throw new Error('Not authorized');
     }
 
