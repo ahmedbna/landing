@@ -5,7 +5,7 @@ export const mdxComponents = {
     <h1
       className={cn(
         'scroll-m-20 text-4xl font-bold tracking-tight mb-2',
-        className
+        className,
       )}
       {...props}
     />
@@ -14,7 +14,16 @@ export const mdxComponents = {
     <h2
       className={cn(
         'scroll-m-20 text-2xl font-semibold tracking-tight mt-10 mb-2',
-        className
+        className,
+      )}
+      {...props}
+    />
+  ),
+  h3: ({ className, ...props }: any) => (
+    <h2
+      className={cn(
+        'scroll-m-20 text-lg font-semibold tracking-tight mt-4 mb-1',
+        className,
       )}
       {...props}
     />
