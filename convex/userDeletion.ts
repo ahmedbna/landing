@@ -110,16 +110,6 @@ export const deleteUserData = internalMutation({
       await ctx.db.delete(credit._id);
     }
 
-    // Delete conversations
-    const conversations = await ctx.db
-      .query('conversations')
-      .withIndex('by_user', (q) => q.eq('userId', args.userId))
-      .collect();
-
-    for (const conversation of conversations) {
-      await ctx.db.delete(conversation._id);
-    }
-
     // Delete course progress
     const courseProgress = await ctx.db
       .query('courseProgress')
@@ -180,7 +170,6 @@ export const deleteUserData = internalMutation({
       success: true,
       deletedRecords: {
         credits: credits.length,
-        conversations: conversations.length,
         courseProgress: courseProgress.length,
         lessonProgress: lessonProgress.length,
         completions: completions.length,

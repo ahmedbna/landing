@@ -1,12 +1,12 @@
-// convex/rooms.ts
+// convex/meets.ts
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import { getAuthUserId } from '@convex-dev/auth/server';
 
-const MAX_ROOM_PARTICIPANTS = 5;
+const MAX_MEET_PARTICIPANTS = 5;
 
 /* -------------------------------------------------- */
-/* LIST ACTIVE ROOMS FOR A LESSON */
+/* LIST ACTIVE MEETS FOR A LESSON */
 /* -------------------------------------------------- */
 export const listByLesson = query({
   args: { lessonId: v.id('lessons') },
@@ -14,116 +14,71 @@ export const listByLesson = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error('Not authenticated');
 
-    const rooms = await ctx.db
-      .query('rooms')
+    const meets = await ctx.db
+      .query('meets')
       .withIndex('by_lesson_status', (q) =>
         q.eq('lessonId', args.lessonId).eq('status', 'active'),
       )
       .order('desc')
       .collect();
 
-    const roomsWithParticipants = await Promise.all(
-      rooms.map(async (room) => {
-        const roomParticipants = await ctx.db
-          .query('roomParticipants')
-          .withIndex('by_room', (q) => q.eq('roomId', room._id))
+    const meetsWithParticipants = await Promise.all(
+      meets.map(async (meet) => {
+        const meetParticipants = await ctx.db
+          .query('meetParticipants')
+          .withIndex('by_room', (q) => q.eq('meetId', meet._id))
           .filter((q) => q.eq(q.field('isActive'), true))
           .collect();
 
         const participants = await Promise.all(
-          roomParticipants.map(async (participant) => {
-            const user = await ctx.db.get(participant.userId);
+          meetParticipants.map(async (p) => {
+            const user = await ctx.db.get(p.userId);
             if (!user) return null;
-
             return {
-              _id: participant._id,
-              userId: participant.userId,
-              roomId: participant.roomId,
-              role: participant.role,
-              isMuted: participant.isMuted,
-              hasRaisedHand: participant.hasRaisedHand,
-              isActive: participant.isActive,
-              joinedAt: participant.joinedAt,
+              _id: p._id,
+              userId: p.userId,
+              meetId: p.meetId,
+              isMuted: p.isMuted,
+              isActive: p.isActive,
+              joinedAt: p.joinedAt,
               name: user.name ?? 'Anonymous',
               image: user.image ?? null,
             };
           }),
         );
 
-        // Filter out null entries (users that no longer exist)
         const activeParticipants = participants.filter(
           (p): p is NonNullable<typeof p> => p !== null,
         );
 
         return {
-          ...room,
+          ...meet,
           participants: activeParticipants,
           participantCount: activeParticipants.length,
-          isFull: activeParticipants.length >= MAX_ROOM_PARTICIPANTS,
+          isFull: activeParticipants.length >= MAX_MEET_PARTICIPANTS,
         };
       }),
     );
 
-    return roomsWithParticipants;
+    return meetsWithParticipants;
   },
 });
 
 /* -------------------------------------------------- */
-/* LIST ALL ACTIVE ROOMS */
-/* -------------------------------------------------- */
-export const list = query({
-  handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error('Not authenticated');
-
-    const rooms = await ctx.db
-      .query('rooms')
-      .withIndex('by_status', (q) => q.eq('status', 'active'))
-      .order('desc')
-      .collect();
-
-    const roomsWithCounts = await Promise.all(
-      rooms.map(async (room) => {
-        const participants = await ctx.db
-          .query('roomParticipants')
-          .withIndex('by_room', (q) => q.eq('roomId', room._id))
-          .collect();
-
-        const host = await ctx.db.get(room.hostId);
-        const activeParticipants = participants.filter((p) => p.isActive);
-
-        return {
-          ...room,
-          participantCount: activeParticipants.length,
-          isFull: activeParticipants.length >= MAX_ROOM_PARTICIPANTS,
-          host: {
-            _id: host?._id,
-            name: host?.name || 'Anonymous',
-            image: host?.image || null,
-          },
-        };
-      }),
-    );
-
-    return roomsWithCounts;
-  },
-});
-
-/* -------------------------------------------------- */
-/* GET SINGLE ROOM */
+/* GET SINGLE MEET ROOM */
 /* -------------------------------------------------- */
 export const get = query({
-  args: { roomId: v.id('rooms') },
+  args: { meetId: v.id('meets') },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error('Not authenticated');
 
-    const room = await ctx.db.get(args.roomId);
-    if (!room) return null;
+    const meet = await ctx.db.get(args.meetId);
+    if (!meet) return null;
 
     const participants = await ctx.db
-      .query('roomParticipants')
-      .withIndex('by_room', (q) => q.eq('roomId', args.roomId))
+      .query('meetParticipants')
+      .withIndex('by_room', (q) => q.eq('meetId', args.meetId))
       .collect();
 
     const activeParticipants = participants.filter((p) => p.isActive);
@@ -143,14 +98,13 @@ export const get = query({
       }),
     );
 
-    const host = await ctx.db.get(room.hostId);
+    const host = await ctx.db.get(meet.hostId);
     const myParticipation = participants.find((p) => p.userId === userId);
-
-    const lesson = await ctx.db.get(room.lessonId);
+    const lesson = await ctx.db.get(meet.lessonId);
     if (!lesson) return null;
 
     return {
-      ...room,
+      ...meet,
       host: {
         _id: host?._id,
         name: host?.name || 'Anonymous',
@@ -159,147 +113,133 @@ export const get = query({
       lesson,
       participants: participantsWithUsers,
       participantCount: activeParticipants.length,
-      isFull: activeParticipants.length >= MAX_ROOM_PARTICIPANTS,
-      maxParticipants: MAX_ROOM_PARTICIPANTS,
-      myRole: myParticipation?.role ?? null,
+      isFull: activeParticipants.length >= MAX_MEET_PARTICIPANTS,
+      maxParticipants: MAX_MEET_PARTICIPANTS,
       isMuted: myParticipation?.isMuted ?? false,
-      hasRaisedHand: false,
       isInRoom: myParticipation?.isActive ?? false,
     };
   },
 });
 
 /* -------------------------------------------------- */
-/* CREATE ROOM (always tied to a lesson) */
+/* CREATE MEET ROOM */
 /* -------------------------------------------------- */
 export const create = mutation({
   args: {
     lessonId: v.id('lessons'),
     title: v.string(),
-    description: v.optional(v.string()),
     topic: v.optional(v.string()),
-    isPrivate: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error('Not authenticated');
 
-    const roomId = await ctx.db.insert('rooms', {
+    const meetId = await ctx.db.insert('meets', {
       title: args.title,
-      description: args.description,
       topic: args.topic,
       lessonId: args.lessonId,
       hostId: userId,
       status: 'active',
-      isPrivate: args.isPrivate ?? false,
       startedAt: Date.now(),
     });
 
-    // Creator joins as speaker (unmuted by default)
-    await ctx.db.insert('roomParticipants', {
-      roomId,
+    // Creator joins automatically
+    await ctx.db.insert('meetParticipants', {
+      meetId,
       userId,
-      role: 'speaker',
       isMuted: false,
-      hasRaisedHand: false,
       isActive: true,
       joinedAt: Date.now(),
     });
 
-    return roomId;
+    return meetId;
   },
 });
 
 /* -------------------------------------------------- */
-/* JOIN ROOM — all users join as speakers */
+/* JOIN MEET ROOM */
 /* -------------------------------------------------- */
 export const join = mutation({
-  args: { roomId: v.id('rooms') },
+  args: { meetId: v.id('meets') },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error('Not authenticated');
 
-    const room = await ctx.db.get(args.roomId);
-    if (!room || room.status !== 'active')
-      throw new Error('Room not available');
+    const meet = await ctx.db.get(args.meetId);
+    if (!meet || meet.status !== 'active')
+      throw new Error('Meet not available');
 
-    // Check if user is already a participant (re-joining)
     const existing = await ctx.db
-      .query('roomParticipants')
+      .query('meetParticipants')
       .withIndex('by_room_user', (q) =>
-        q.eq('roomId', args.roomId).eq('userId', userId),
+        q.eq('meetId', args.meetId).eq('userId', userId),
       )
       .first();
 
     if (existing) {
       if (!existing.isActive) {
-        // Re-joining — check capacity first
         const activeParticipants = await ctx.db
-          .query('roomParticipants')
-          .withIndex('by_room', (q) => q.eq('roomId', args.roomId))
+          .query('meetParticipants')
+          .withIndex('by_room', (q) => q.eq('meetId', args.meetId))
           .filter((q) => q.eq(q.field('isActive'), true))
           .collect();
 
-        if (activeParticipants.length >= MAX_ROOM_PARTICIPANTS) {
+        if (activeParticipants.length >= MAX_MEET_PARTICIPANTS) {
           throw new Error(
-            `Room is full (max ${MAX_ROOM_PARTICIPANTS} participants)`,
+            `Meet is full (max ${MAX_MEET_PARTICIPANTS} participants)`,
           );
         }
 
         await ctx.db.patch(existing._id, {
           isActive: true,
           isMuted: false,
-          role: 'speaker',
           joinedAt: Date.now(),
         });
       }
-      return { participantId: existing._id, role: existing.role };
+      return { participantId: existing._id };
     }
 
-    // New participant — enforce capacity limit
+    // New participant — enforce limit
     const activeParticipants = await ctx.db
-      .query('roomParticipants')
-      .withIndex('by_room', (q) => q.eq('roomId', args.roomId))
+      .query('meetParticipants')
+      .withIndex('by_room', (q) => q.eq('meetId', args.meetId))
       .filter((q) => q.eq(q.field('isActive'), true))
       .collect();
 
-    if (activeParticipants.length >= MAX_ROOM_PARTICIPANTS) {
+    if (activeParticipants.length >= MAX_MEET_PARTICIPANTS) {
       throw new Error(
-        `Room is full (max ${MAX_ROOM_PARTICIPANTS} participants)`,
+        `Meet is full (max ${MAX_MEET_PARTICIPANTS} participants)`,
       );
     }
 
-    // All new participants join as speakers, unmuted by default
-    const participantId = await ctx.db.insert('roomParticipants', {
-      roomId: args.roomId,
+    const participantId = await ctx.db.insert('meetParticipants', {
+      meetId: args.meetId,
       userId,
-      role: 'speaker',
       isMuted: false,
-      hasRaisedHand: false,
       isActive: true,
       joinedAt: Date.now(),
     });
 
-    return { participantId, role: 'speaker' };
+    return { participantId };
   },
 });
 
 /* -------------------------------------------------- */
-/* LEAVE ROOM — auto-delete when everyone leaves */
+/* LEAVE MEET ROOM */
 /* -------------------------------------------------- */
 export const leave = mutation({
-  args: { roomId: v.id('rooms') },
+  args: { meetId: v.id('meets') },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error('Not authenticated');
 
-    const room = await ctx.db.get(args.roomId);
-    if (!room) throw new Error('Room not found');
+    const meet = await ctx.db.get(args.meetId);
+    if (!meet) throw new Error('Meet not found');
 
     const participant = await ctx.db
-      .query('roomParticipants')
+      .query('meetParticipants')
       .withIndex('by_room_user', (q) =>
-        q.eq('roomId', args.roomId).eq('userId', userId),
+        q.eq('meetId', args.meetId).eq('userId', userId),
       )
       .first();
 
@@ -307,25 +247,23 @@ export const leave = mutation({
       await ctx.db.patch(participant._id, { isActive: false });
     }
 
-    // Check remaining active participants
     const remaining = await ctx.db
-      .query('roomParticipants')
-      .withIndex('by_room', (q) => q.eq('roomId', args.roomId))
+      .query('meetParticipants')
+      .withIndex('by_room', (q) => q.eq('meetId', args.meetId))
       .filter((q) => q.eq(q.field('isActive'), true))
       .collect();
 
     const othersRemaining = remaining.filter((p) => p.userId !== userId);
 
-    // If no one else is left, delete the room and all participant records
     if (othersRemaining.length === 0) {
-      await _deleteRoomAndParticipants(ctx, args.roomId);
+      await _deleteMeetRoom(ctx, args.meetId);
       return { success: true, roomDeleted: true };
     }
 
-    // If the host leaves and others remain, transfer host to next person
-    if (room.hostId === userId) {
-      const nextHost = othersRemaining[0];
-      await ctx.db.patch(args.roomId, { hostId: nextHost.userId });
+    if (meet.hostId === userId) {
+      await ctx.db.patch(args.meetId, {
+        hostId: othersRemaining[0].userId,
+      });
     }
 
     return { success: true, roomDeleted: false };
@@ -336,19 +274,19 @@ export const leave = mutation({
 /* TOGGLE MUTE */
 /* -------------------------------------------------- */
 export const toggleMute = mutation({
-  args: { roomId: v.id('rooms') },
+  args: { meetId: v.id('meets') },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error('Not authenticated');
 
     const participant = await ctx.db
-      .query('roomParticipants')
+      .query('meetParticipants')
       .withIndex('by_room_user', (q) =>
-        q.eq('roomId', args.roomId).eq('userId', userId),
+        q.eq('meetId', args.meetId).eq('userId', userId),
       )
       .first();
 
-    if (!participant) throw new Error('Not in room');
+    if (!participant) throw new Error('Not in meet');
 
     await ctx.db.patch(participant._id, { isMuted: !participant.isMuted });
     return { isMuted: !participant.isMuted };
@@ -356,17 +294,17 @@ export const toggleMute = mutation({
 });
 
 /* -------------------------------------------------- */
-/* INTERNAL: delete room + all participant records */
+/* INTERNAL: delete meet room + all participant records */
 /* -------------------------------------------------- */
-async function _deleteRoomAndParticipants(ctx: any, roomId: any) {
+async function _deleteMeetRoom(ctx: any, meetId: any) {
   const participants = await ctx.db
-    .query('roomParticipants')
-    .withIndex('by_room', (q: any) => q.eq('roomId', roomId))
+    .query('meetParticipants')
+    .withIndex('by_room', (q: any) => q.eq('meetId', meetId))
     .collect();
 
   for (const p of participants) {
     await ctx.db.delete(p._id);
   }
 
-  await ctx.db.delete(roomId);
+  await ctx.db.delete(meetId);
 }

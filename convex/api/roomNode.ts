@@ -1,6 +1,7 @@
 'use node';
-import { action } from '../_generated/server';
+
 import { v } from 'convex/values';
+import { action } from '../_generated/server';
 import { AccessToken } from 'livekit-server-sdk';
 
 export const generateRoomToken = action({
@@ -22,7 +23,9 @@ export const generateRoomToken = action({
 
     // Room name scoped to the lesson so rooms are isolated per lesson
     const roomName = `lesson_${args.lessonId}_room_${args.roomId}`;
-    const canPublish = args.role === 'host' || args.role === 'speaker';
+
+    // All users can publish — everyone is a speaker
+    const canPublish = true;
 
     const at = new AccessToken(
       process.env.LIVEKIT_API_KEY,
@@ -59,7 +62,6 @@ export const generateLivekitToken = action(async (_ctx, args: any) => {
     : 'quickstart-room';
   const participantIdentity = args.userId ?? 'guest';
   const participantName = args.userName ?? 'Participant';
-  const role = args.role ?? 'listener';
 
   if (!process.env.LIVEKIT_API_KEY || !process.env.LIVEKIT_API_SECRET) {
     throw new Error('LiveKit environment variables not set');
@@ -75,12 +77,11 @@ export const generateLivekitToken = action(async (_ctx, args: any) => {
     },
   );
 
-  const canPublish = role === 'host' || role === 'speaker';
-
+  // All users can publish
   at.addGrant({
     roomJoin: true,
     room: roomName,
-    canPublish,
+    canPublish: true,
     canSubscribe: true,
     canPublishData: true,
   });

@@ -1,24 +1,34 @@
+// middleware.ts — REPLACE your existing middleware with this
 import {
   convexAuthNextjsMiddleware,
   createRouteMatcher,
   nextjsMiddlewareRedirect,
 } from '@convex-dev/auth/nextjs/server';
 
-// Public routes ONLY
-const isPublicRoute = createRouteMatcher(['/', '/privacy', '/terms', '/login']);
-
+const isPublicRoute = createRouteMatcher([
+  '/',
+  '/privacy',
+  '/terms',
+  '/login',
+  '/purchase',
+]);
 const isSignInPage = createRouteMatcher(['/login']);
+const isAdminRoute = createRouteMatcher(['/admin', '/admin/(.*)']);
 
 export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
   const isAuthenticated = await convexAuth.isAuthenticated();
 
-  // If user is logged in and tries to access /login → redirect home
   if (isSignInPage(request) && isAuthenticated) {
     return nextjsMiddlewareRedirect(request, '/');
   }
 
-  // If route is NOT public and user is NOT authenticated → protect it
   if (!isPublicRoute(request) && !isAuthenticated) {
+    return nextjsMiddlewareRedirect(request, '/login');
+  }
+
+  // Admin routes: check for admin session (cookie-based hint)
+  // Full auth is enforced server-side in each admin page via Convex query
+  if (isAdminRoute(request) && !isAuthenticated) {
     return nextjsMiddlewareRedirect(request, '/login');
   }
 });
