@@ -7,9 +7,9 @@ export const metadata = {
   title: 'Restore Purchases',
 };
 
-export default async function PrivacyPage() {
+export default async function PurchasePage() {
   const source = fs.readFileSync(
-    path.join(process.cwd(), 'content/purchases.mdx'),
+    path.join(process.cwd(), 'content/purchase.mdx'),
     'utf8',
   );
 
